@@ -7,14 +7,14 @@ SAMPLE_RATE = 16000
 SAMPLE_WINDOW_SIZE_MS = 1000
 SAMPLE_FRAMES = SAMPLE_WINDOW_SIZE_MS * SAMPLE_RATE // 1000
 
-N = 256
-L = 20
-B = 256
-H = 512
-P = 3
-X = 8
-R = 4
+N = 128  # encoder output
+L = 20  # encoder kernel
+B = 128  # bottleneck otuput
+H = 256  # conv output
+P = 3  # conv kernel
+X = 8  # # of repeat
+R = 4  # repeat
 C = 2
 
-BATCH_SIZE = 100
+BATCH_SIZE = 5
 N_BATCH = 100

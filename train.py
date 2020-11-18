@@ -13,6 +13,7 @@ from tensorflow.keras import layers, losses, metrics, optimizers, models
 
 from config import *
 from models import *
+from tasnet_dataset import *
 
 
 def train():
@@ -20,6 +21,7 @@ def train():
 
     tasnet = TasNet()
     model = tasnet.model()
+    model.summary()
 
     model.compile(
         optimizer=optimizers.Adam(),
@@ -30,10 +32,11 @@ def train():
         data_generator("train"),
         steps_per_epoch=N_BATCH,
         batch_size=BATCH_SIZE,
-        epochs=1,
+        epochs=10,
         shuffle=False,
         verbose=1,
     )
+
 
 
 if __name__ == "__main__":

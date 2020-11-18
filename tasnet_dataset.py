@@ -32,11 +32,10 @@ def data_generator(mode):
 
             mix = [a + b for a, b in zip(clean, noise)]
 
-        yield np.stack(mix), np.stack(clean), np.stack(noise)
+        yield (np.stack(mix), np.stack((np.stack(clean), np.stack(noise)), axis=0))
 
 
 if __name__ == "__main__":
-    mix, clean, noise = next(data_generator("train"))
+    mix, x = next(data_generator("train"))
     print(mix.shape)
-    print(clean.shape)
-    print(noise.shape)
+    print(x.shape)
