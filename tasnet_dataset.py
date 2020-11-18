@@ -26,6 +26,8 @@ def data_generator(mode):
 
             index = np.random.choice(len(noise_files))
             signal, _ = sf.read(noise_files[index])
+            if signal.shape[0] <= SAMPLE_FRAMES:
+                continue
             beg = np.random.randint(signal.shape[0] - SAMPLE_FRAMES)
             end = beg + SAMPLE_FRAMES
             noise.append(signal[beg:end])

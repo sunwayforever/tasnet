@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # 2020-11-17 14:21
+import os
+
 DATA_DIR = "/media/sunway/backup/tasnet_datasets/"
 
 SAMPLE_RATE = 16000
@@ -18,3 +20,8 @@ C = 2
 
 BATCH_SIZE = 5
 N_BATCH = 100
+
+TASNET = os.environ.get("TASNET", "default")
+
+MODEL_PATH = "./model/" + TASNET + "/"
+SAVED_MODEL_PATH = MODEL_PATH + "/tasnet/"
