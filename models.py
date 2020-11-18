@@ -12,17 +12,6 @@ from tensorflow.keras import layers, losses, metrics, optimizers, models
 # tf.config.run_functions_eagerly(True)
 
 
-class OverlapAndAdd(layers.Layer):
-    def __init__(self):
-        super(OverlapAndAdd, self).__init__()
-
-    def call(self, input):
-        return tf.signal.overlap_and_add(
-            signal=input,
-            frame_step=L // 2,
-        )
-
-
 class TemporalBlock(layers.Layer):
     def __init__(self):
         super(TemporalBlock, self).__init__()
@@ -61,11 +50,10 @@ class TasNet:
         )
         self.decoder = keras.Sequential()
         self.decoder.add(layers.Dense(L, use_bias=False))
-        # self.decoder.add(OverlapAndAdd())
         self.decoder.add(
             layers.Lambda(
                 lambda signal: tf.signal.overlap_and_add(
-                    signal,
+                    tf.reshape(signal, (BATCH_SIZE, K, L)),
                     frame_step=L // 2,
                 ),
             )

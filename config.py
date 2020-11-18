@@ -17,6 +17,7 @@ P = 3  # conv kernel
 X = 8  # # of repeat
 R = 4  # repeat
 C = 2
+K = (SAMPLE_FRAMES - L) * 2 // L + 1
 
 BATCH_SIZE = 5
 N_BATCH = 100
