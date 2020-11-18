@@ -9,7 +9,7 @@ from tensorflow import keras
 
 from tensorflow.keras import layers, losses, metrics, optimizers, models
 
-tf.config.run_functions_eagerly(True)
+# tf.config.run_functions_eagerly(True)
 
 
 class OverlapAndAdd(layers.Layer):
@@ -100,9 +100,7 @@ class TasNet:
         probs = tf.unstack(probs, axis=-1)
         outputs = [mask * encoded_input for mask in probs]
 
-        outputs = [self.decoder(output) for output in outputs]
-
-        print("decoder output:", outputs[0].shape)
+        outputs = tf.stack([self.decoder(output) for output in outputs])
         return keras.Model(input, outputs)
 
     @staticmethod
@@ -112,8 +110,8 @@ class TasNet:
 
         y_target = tf.reduce_sum(y_hat * y, axis=-1, keepdims=True) * y / norm(y)
         up = norm(y_target)
-        low = norm(y_hat - y_target)
-        return 10 * tf.math.log(up / low) / tf.math.log(10.0)
+        low = norm(y_hat - y_target) + 1e-10
+        return 10 * tf.math.log((up / low) + 1e-10) / tf.math.log(10.0)
 
     @staticmethod
     def loss(y, y_hat):
