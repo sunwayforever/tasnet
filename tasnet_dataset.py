@@ -20,9 +20,11 @@ def data_generator(mode):
         for _ in range(BATCH_SIZE):
             index = np.random.choice(len(clean_files))
             signal, _ = sf.read(clean_files[index])
+            if signal.shape[0] <= SAMPLE_FRAMES:
+                continue
             beg = np.random.randint(signal.shape[0] - SAMPLE_FRAMES)
             end = beg + SAMPLE_FRAMES
-            clean.append(signal[beg:end])
+            clean_signal = signal[beg:end]
 
             index = np.random.choice(len(noise_files))
             signal, _ = sf.read(noise_files[index])
@@ -30,7 +32,10 @@ def data_generator(mode):
                 continue
             beg = np.random.randint(signal.shape[0] - SAMPLE_FRAMES)
             end = beg + SAMPLE_FRAMES
-            noise.append(signal[beg:end])
+            noise_signal = signal[beg:end]
+
+            clean.append(clean_signal)
+            noise.append(noise_signal)
 
             mix = [a + b for a, b in zip(clean, noise)]
 

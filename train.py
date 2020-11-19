@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # 2020-11-17 14:22
 import tensorflow as tf
+
 import numpy as np
 import os
 import argparse
@@ -14,6 +15,7 @@ from tensorflow.keras import layers, losses, metrics, optimizers, models, callba
 from config import *
 from models import *
 from tasnet_dataset import *
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -58,6 +60,9 @@ def train():
         batch_size=BATCH_SIZE,
         epochs=FLAGS.epoch,
         callbacks=[save_model_callback, tensorboard_callback],
+        validation_data=data_generator("test"),
+        validation_freq=2,
+        validation_steps=2,
         shuffle=False,
         verbose=1,
     )
