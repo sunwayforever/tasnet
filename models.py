@@ -49,51 +49,55 @@ class TemporalBlock(layers.Layer):
 
 class TasNet:
     def __init__(self):
+        # ========== encoder
         self.encoder = layers.Conv1D(
             filters=N, kernel_size=L, strides=L // 2, activation="relu", name="encoder"
         )
+
+        # ========== separator
+        self.separation = keras.Sequential()
+        self.separation.add(layers.Conv1D(B, 1, 1))
+        for _ in range(R):
+            self.separation.add(TemporalBlock())
+        self.separation.add(layers.Conv1D(C * N, 1, 1))
+        self.separation.add(layers.PReLU(shared_axes=[1]))
+        self.separation.add(layers.Reshape((K, C, N)))
+        self.separation.add(layers.Permute((2, 1, 3), input_shape=(K, C, N)))
+        self.separation.add(layers.Softmax())
+
+        # ========== decoder
         self.decoder = keras.Sequential()
         self.decoder.add(layers.Dense(L, use_bias=False))
         self.decoder.add(
             layers.Lambda(
                 lambda signal: tf.signal.overlap_and_add(
-                    tf.reshape(signal, (BATCH_SIZE, K, L)),
+                    tf.reshape(signal, (-1, C, K, L)),
                     frame_step=L // 2,
                 ),
             )
         )
 
-        self.bottleneck = layers.Conv1D(B, 1, 1)
-        self.separation_blocks = [TemporalBlock() for _ in range(R)]
-        self.separation_conv = [layers.Conv1D(N, 1, 1) for _ in range(C)]
-
     def model(self):
         input = layers.Input(shape=(SAMPLE_FRAMES))
 
         output = tf.expand_dims(input, axis=-1)
-        # [M,N,K]
+        # [M,K,N]
         output = self.encoder(output)
         print("encoder output:", output.shape)
-
         encoded_input = output
-        # [M,B,K]
-        output = self.bottleneck(output)
+        # [M,K,B]
 
-        for conv_block in self.separation_blocks:
-            output = conv_block(output)
-        print("tempora conv output:", output.shape)
+        # [M,C,K,N]
+        output = self.separation(output)
+        print("separation output:", output.shape)
 
-        outputs = [block(output) for block in self.separation_conv]
+        encoded_input = tf.expand_dims(encoded_input, 1)
+        output = output * encoded_input
+        print("mask output:", output.shape)
 
-        # [M,2N,K]
-        print("separation output:", outputs[0].shape)
-
-        probs = tf.nn.softmax(tf.stack(outputs, axis=-1))
-        probs = tf.unstack(probs, axis=-1)
-        outputs = [mask * encoded_input for mask in probs]
-
-        outputs = tf.stack([self.decoder(output) for output in outputs])
-        return keras.Model(input, outputs)
+        output = self.decoder(output)
+        print("decoder output:", output.shape)
+        return keras.Model(input, output)
 
     @staticmethod
     def _calc_sdr(y, y_hat):
@@ -107,7 +111,11 @@ class TasNet:
 
     @staticmethod
     def loss(y, y_hat):
-        sdr1 = TasNet._calc_sdr(y_hat[0], y[0]) + TasNet._calc_sdr(y_hat[1], y[1])
-        sdr2 = TasNet._calc_sdr(y_hat[1], y[0]) + TasNet._calc_sdr(y_hat[0], y[1])
+        sdr1 = TasNet._calc_sdr(y_hat[:, 0], y[:, 0]) + TasNet._calc_sdr(
+            y_hat[:, 1], y[:, 1]
+        )
+        sdr2 = TasNet._calc_sdr(y_hat[:, 1], y[:, 0]) + TasNet._calc_sdr(
+            y_hat[:, 0], y[:, 1]
+        )
         sdr = tf.maximum(sdr1, sdr2)
-        return tf.reduce_mean(-sdr) / C
+        return tf.reduce_mean(-sdr)

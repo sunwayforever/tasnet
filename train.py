@@ -30,6 +30,8 @@ parser.add_argument(
 )
 FLAGS = parser.parse_args()
 
+model = None
+
 tensorboard_callback = callbacks.TensorBoard(log_dir=f"/tmp/tasnet/{TASNET}")
 save_model_callback = callbacks.LambdaCallback(
     on_epoch_end=lambda epoch, logs: epoch % 10 == 9 and model.save(SAVED_MODEL_PATH)
@@ -37,13 +39,16 @@ save_model_callback = callbacks.LambdaCallback(
 
 
 def train():
+    global model
     tf.keras.backend.clear_session()
 
     tasnet = TasNet()
 
     if os.path.exists(SAVED_MODEL_PATH) and not FLAGS.reset:
         print("load model")
-        model = keras.models.load_model(SAVED_MODEL_PATH)
+        model = keras.models.load_model(
+            SAVED_MODEL_PATH, custom_objects={"loss": TasNet.loss}
+        )
     else:
         model = tasnet.model()
 
@@ -61,7 +66,7 @@ def train():
         epochs=FLAGS.epoch,
         callbacks=[save_model_callback, tensorboard_callback],
         validation_data=data_generator("test"),
-        validation_freq=2,
+        validation_freq=5,
         validation_steps=2,
         shuffle=False,
         verbose=1,

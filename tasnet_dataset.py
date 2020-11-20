@@ -39,7 +39,7 @@ def data_generator(mode):
 
             mix = [a + b for a, b in zip(clean, noise)]
 
-        yield (np.stack(mix), np.stack((np.stack(clean), np.stack(noise)), axis=0))
+        yield (np.stack(mix), np.stack((np.stack(clean), np.stack(noise)), axis=1))
         # yield (np.stack(mix), np.stack(clean), np.stack(noise))
 
 
