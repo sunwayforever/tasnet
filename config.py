@@ -19,7 +19,7 @@ R = 4  # repeat
 C = 2
 K = (SAMPLE_FRAMES - L) * 2 // L + 1
 
-BATCH_SIZE = 5
+BATCH_SIZE = 2
 N_BATCH = 100
 
 TASNET = os.environ.get("TASNET", "default")

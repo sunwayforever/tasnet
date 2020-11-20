@@ -26,11 +26,15 @@ class TemporalBlock(layers.Layer):
             # [M,H,K]
             conv_layers.append(layers.Conv1D(filters=H, kernel_size=1))
             conv_layers.append(layers.PReLU(shared_axes=[1]))
+            conv_layers.append(layers.LayerNormalization())
             conv_layers.append(
                 # [M,B,K]
-                layers.Conv1D(filters=B, kernel_size=1, strides=1, padding="same")
+                layers.SeparableConv1D(
+                    filters=B, kernel_size=1, strides=1, padding="same"
+                )
             )
             conv_layers.append(layers.PReLU(shared_axes=[1]))
+            conv_layers.append(layers.LayerNormalization())
             self.layers.append(conv_layers)
 
     def call(self, input):
