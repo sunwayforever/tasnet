@@ -9,7 +9,9 @@ from tensorflow import keras
 
 from tensorflow.keras import layers, losses, metrics, optimizers, models
 
-# tf.config.run_functions_eagerly(True)
+tf.config.run_functions_eagerly(True)
+
+epsilon = 1e-5
 
 
 class TemporalBlock(layers.Layer):
@@ -100,22 +102,25 @@ class TasNet:
         return keras.Model(input, output)
 
     @staticmethod
-    def _calc_sdr(y, y_hat):
+    def _calc_sdr(s, s_hat):
         def norm(x):
             return tf.reduce_sum(x ** 2, axis=-1, keepdims=True)
 
-        y_target = tf.reduce_sum(y_hat * y, axis=-1, keepdims=True) * y / norm(y)
-        up = norm(y_target)
-        low = norm(y_hat - y_target) + 1e-10
-        return 10 * tf.math.log((up / low) + 1e-10) / tf.math.log(10.0)
+        s_target = tf.reduce_sum(s_hat * s, axis=-1, keepdims=True) * s / norm(s)
+        e_noise = s_hat - s_target
+        return (
+            10
+            * tf.math.log((norm(s_target) + epsilon) / (norm(e_noise) + epsilon))
+            / tf.math.log(10.0)
+        )
 
     @staticmethod
     def loss(y, y_hat):
-        sdr1 = TasNet._calc_sdr(y_hat[:, 0], y[:, 0]) + TasNet._calc_sdr(
-            y_hat[:, 1], y[:, 1]
+        sdr1 = TasNet._calc_sdr(y[:, 0], y_hat[:, 0]) + TasNet._calc_sdr(
+            y[:, 1], y_hat[:, 1]
         )
-        sdr2 = TasNet._calc_sdr(y_hat[:, 1], y[:, 0]) + TasNet._calc_sdr(
-            y_hat[:, 0], y[:, 1]
-        )
-        sdr = tf.maximum(sdr1, sdr2)
-        return tf.reduce_mean(-sdr)
+        # sdr2 = TasNet._calc_sdr(y_hat[:, 1], y[:, 0]) + TasNet._calc_sdr(
+        #     y_hat[:, 0], y[:, 1]
+        # )
+        # sdr = tf.maximum(sdr1, sdr2)
+        return tf.reduce_mean(-sdr1)
