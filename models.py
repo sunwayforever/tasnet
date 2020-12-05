@@ -9,9 +9,10 @@ from tensorflow import keras
 
 from tensorflow.keras import layers, losses, metrics, optimizers, models
 
-tf.config.run_functions_eagerly(True)
+# tf.config.run_functions_eagerly(True)
+# count = 0
 
-epsilon = 1e-5
+epislon = 1e-9
 
 
 class TemporalBlock(layers.Layer):
@@ -108,9 +109,23 @@ class TasNet:
 
         s_target = tf.reduce_sum(s_hat * s, axis=-1, keepdims=True) * s / norm(s)
         e_noise = s_hat - s_target
+
+        # global count
+        # count += 1
+        # print(f"check: {count}")
+        # print("s")
+        # print(s)
+        # print("s_hat")
+        # print(s_hat)
+        # print("target")
+        # print(s_target)
+        # np.save(f"/tmp/s_{count}.npy", s)
+        # np.save(f"/tmp/s_hat_{count}.npy", s_hat)
+        # np.save(f"/tmp/target_{count}.npy", s_target)
+
         return (
             10
-            * tf.math.log((norm(s_target) + epsilon) / (norm(e_noise) + epsilon))
+            * tf.math.log((norm(s_target) + epislon) / (norm(e_noise) + epislon))
             / tf.math.log(10.0)
         )
 
@@ -124,3 +139,8 @@ class TasNet:
         # )
         # sdr = tf.maximum(sdr1, sdr2)
         return tf.reduce_mean(-sdr1)
+
+    @staticmethod
+    def mse_loss(y, y_hat):
+        # return losses.MSE(y[:, 0], y_hat[:, 0]) + losses.MSE(y[:, 1], y_hat[:, 1])
+        return losses.MSE(y, y_hat)

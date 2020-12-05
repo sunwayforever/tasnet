@@ -34,7 +34,7 @@ model = None
 
 tensorboard_callback = callbacks.TensorBoard(log_dir=f"/tmp/tasnet/{TASNET}")
 save_model_callback = callbacks.LambdaCallback(
-    on_epoch_end=lambda epoch, logs: epoch % 10 == 9 and model.save(SAVED_MODEL_PATH)
+    on_epoch_end=lambda epoch, logs: epoch % 5 == 4 and model.save(SAVED_MODEL_PATH)
 )
 
 
@@ -65,9 +65,9 @@ def train():
         batch_size=BATCH_SIZE,
         epochs=FLAGS.epoch,
         callbacks=[save_model_callback, tensorboard_callback],
-        validation_data=data_generator("test"),
-        validation_freq=5,
-        validation_steps=2,
+        # validation_data=data_generator("test"),
+        # validation_freq=5,
+        # validation_steps=2,
         shuffle=False,
         verbose=1,
     )
