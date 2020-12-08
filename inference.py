@@ -8,6 +8,7 @@ import argparse
 import glob
 import re
 
+import librosa
 import soundfile as sf
 from tensorflow import keras
 from tensorflow.keras import layers, losses, metrics, optimizers, models
@@ -23,8 +24,8 @@ def norm(x):
 
 
 def inference(model):
-    clean, _ = sf.read(FLAGS.clean, dtype="float32")
-    noise, _ = sf.read(FLAGS.noise, dtype="float32")
+    clean, _ = librosa.load(FLAGS.clean, sr=SAMPLE_RATE, dtype="float32")
+    noise, _ = librosa.load(FLAGS.noise, sr=SAMPLE_RATE, dtype="float32")
 
     rem = noise.shape[0] % SAMPLE_FRAMES
 
@@ -42,9 +43,9 @@ def inference(model):
     print("sdr of clean:", TasNet._calc_sdr(clean, clean_hat))
     print("sdr of noise:", TasNet._calc_sdr(noise, noise_hat))
 
-    sf.write("/tmp/noisy.wav", noisy, 16000)
-    sf.write("/tmp/clean.wav", clean_hat, 16000)
-    sf.write("/tmp/noise.wav", noise_hat, 16000)
+    sf.write("/tmp/noisy.wav", noisy, SAMPLE_RATE)
+    sf.write("/tmp/clean.wav", clean_hat, SAMPLE_RATE)
+    sf.write("/tmp/noise.wav", noise_hat, SAMPLE_RATE)
 
 
 if __name__ == "__main__":

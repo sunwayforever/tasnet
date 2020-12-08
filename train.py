@@ -60,9 +60,8 @@ def train():
     )
 
     model.fit(
-        data_generator("train"),
+        get_dataset("train"),
         steps_per_epoch=N_BATCH,
-        batch_size=BATCH_SIZE,
         epochs=FLAGS.epoch,
         callbacks=[save_model_callback, tensorboard_callback],
         # validation_data=data_generator("test"),
