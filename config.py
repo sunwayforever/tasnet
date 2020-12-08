@@ -6,7 +6,7 @@ import os
 DATA_DIR = "/data/datasets/tasnet_datasets/"
 
 SAMPLE_RATE = 16000
-SAMPLE_WINDOW_SIZE_MS = 1000
+SAMPLE_WINDOW_SIZE_MS = 4000
 SAMPLE_FRAMES = SAMPLE_WINDOW_SIZE_MS * SAMPLE_RATE // 1000
 
 N = 256  # encoder output
@@ -19,8 +19,8 @@ R = 4  # repeat
 C = 2
 K = (SAMPLE_FRAMES - L) * 2 // L + 1
 
-BATCH_SIZE = 50
-N_BATCH = 100
+BATCH_SIZE = 10
+N_BATCH = 20
 
 TASNET = os.environ.get("TASNET", "default")
 

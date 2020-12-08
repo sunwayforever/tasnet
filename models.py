@@ -9,9 +9,10 @@ from tensorflow import keras
 
 from tensorflow.keras import layers, losses, metrics, optimizers, models
 
-# tf.config.run_functions_eagerly(True)
-# count = 0
+if tf.__version__ >= "2.3.0":
+    tf.config.run_functions_eagerly(True)
 
+# count = 0
 epislon = 1e-9
 
 
@@ -33,11 +34,13 @@ class TemporalBlock(layers.Layer):
             conv_layers.append(
                 # [M,B,K]
                 layers.SeparableConv1D(
-                    filters=B, kernel_size=1, strides=1, padding="same"
+                    filters=B,
+                    kernel_size=P,
+                    strides=1,
+                    padding="same",
+                    dilation_rate=2 ** i,
                 )
             )
-            conv_layers.append(layers.PReLU(shared_axes=[1]))
-            conv_layers.append(layers.LayerNormalization())
             self.layers.append(conv_layers)
 
     def call(self, input):
@@ -66,7 +69,7 @@ class TasNet:
         self.separation.add(layers.PReLU(shared_axes=[1]))
         self.separation.add(layers.Reshape((K, C, N)))
         self.separation.add(layers.Permute((2, 1, 3), input_shape=(K, C, N)))
-        self.separation.add(layers.Softmax())
+        self.separation.add(layers.Softmax(axis=1))
 
         # ========== decoder
         self.decoder = keras.Sequential()
@@ -125,7 +128,7 @@ class TasNet:
 
         return (
             10
-            * tf.math.log((norm(s_target) + epislon) / (norm(e_noise) + epislon))
+            * tf.math.log(norm(s_target) / (norm(e_noise) + epislon))
             / tf.math.log(10.0)
         )
 
@@ -138,7 +141,7 @@ class TasNet:
         #     y_hat[:, 0], y[:, 1]
         # )
         # sdr = tf.maximum(sdr1, sdr2)
-        return tf.reduce_mean(-sdr1)
+        return tf.reduce_mean(-sdr1) / C
 
     @staticmethod
     def mse_loss(y, y_hat):

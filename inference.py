@@ -18,23 +18,29 @@ from models import *
 FLAGS = None
 
 
-def inference(model):
-    clean, _ = sf.read(FLAGS.clean)
-    noise, _ = sf.read(FLAGS.noise)
+def norm(x):
+    return (x ** 2).sum()
 
-    n = clean.shape[0] // SAMPLE_FRAMES
-    rem = clean.shape[0] % SAMPLE_FRAMES
+
+def inference(model):
+    clean, _ = sf.read(FLAGS.clean, dtype="float32")
+    noise, _ = sf.read(FLAGS.noise, dtype="float32")
+
+    rem = noise.shape[0] % SAMPLE_FRAMES
 
     if rem != 0:
-        clean = clean[:-rem]
-    noise = np.repeat(noise[:SAMPLE_FRAMES], n)
+        noise = noise[:-rem]
 
-    noisy = clean + noise
+    clean = clean[: noise.size]
 
+    noisy = clean + np.sqrt(norm(clean) / norm(noise)) * noise
     x = model.predict(np.reshape(noisy, (-1, SAMPLE_FRAMES)))
 
     clean_hat = np.reshape(x[:, 0, :], (-1))
     noise_hat = np.reshape(x[:, 1, :], (-1))
+
+    print("sdr of clean:", TasNet._calc_sdr(clean, clean_hat))
+    print("sdr of noise:", TasNet._calc_sdr(noise, noise_hat))
 
     sf.write("/tmp/noisy.wav", noisy, 16000)
     sf.write("/tmp/clean.wav", clean_hat, 16000)

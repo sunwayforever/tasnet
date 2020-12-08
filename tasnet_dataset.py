@@ -11,20 +11,20 @@ import pickle
 with open(f"{DATA_DIR}/data.pkl", "rb") as f:
     data = pickle.load(f)
 
-MIN_ENERGY = 1e-5
+MIN_ENERGY = 1e-3
 
 
 def data_generator(mode):
     clean_files, noise_files = data[mode]["clean"], data[mode]["noise"]
 
     def norm(x):
-        return (x ** 2).mean()
+        return (x ** 2).sum()
 
     while True:
         mix, clean, noise = [], [], []
         for _ in range(BATCH_SIZE):
             index = np.random.choice(len(clean_files))
-            signal, _ = sf.read(clean_files[index])
+            signal, _ = sf.read(clean_files[index], dtype = "float32")
             if signal.shape[0] <= SAMPLE_FRAMES:
                 continue
             beg = np.random.randint(signal.shape[0] - SAMPLE_FRAMES)
@@ -34,7 +34,7 @@ def data_generator(mode):
                 continue
 
             index = np.random.choice(len(noise_files))
-            signal, _ = sf.read(noise_files[index])
+            signal, _ = sf.read(noise_files[index], dtype = "float32")
             if signal.shape[0] <= SAMPLE_FRAMES:
                 continue
             beg = np.random.randint(signal.shape[0] - SAMPLE_FRAMES)
@@ -45,7 +45,7 @@ def data_generator(mode):
             clean.append(clean_signal)
             noise.append(noise_signal)
 
-            mix = [a + b for a, b in zip(clean, noise)]
+            mix = [a + (np.sqrt(norm(a) / norm(b))) * b for a, b in zip(clean, noise)]
 
         yield (np.stack(mix), np.stack((np.stack(clean), np.stack(noise)), axis=1))
 
